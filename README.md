@@ -208,8 +208,8 @@ stateDiagram-v2
 ```
 
 ### 메뉴그룹
-- `menu_group`은 식별자와 이름을 가진다.
-- `name`은 빈값이 아닌 이름만 가질 수 있다.
+- `메뉴그룹(menu_group)`은 이름을 가진다.
+  - 빈값이 아닌 이름만 가질 수 있다.
 
 ```mermaid
 stateDiagram-v2
@@ -295,7 +295,7 @@ sequenceDiagram
     SHOP ->> Order: 매장주문 접수 (상태: accepted)
     SHOP ->> Customer: 매장주문 서빙 완료
     SHOP ->> Order: 매장주문 서빙 (상태: served)
-    SHOP ->> Order: 매장주문 상태 변경 (상태: completed)
+    SHOP ->> Order: 매장주문 완료 (상태: completed)
     Order -->> OrderTable: 빈 테이블 설정
 ```
 
