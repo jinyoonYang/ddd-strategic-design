@@ -105,6 +105,7 @@ docker compose -p kitchenpos up -d
 |고객 |customer |메뉴을 주문하는 고객. 
 |배달원 |rider |고객에게 배달주문을 배달하는 사람.
 |비속어 |profanity |비속어로 은어, 속어등 저속한 단어를 의미함.
+|가격비교 |price comparison |메뉴의 가격과 메뉴에 속한 상품의 총금액을 비교하는 행위를 의미함.
 
 ### 상품
 
@@ -127,7 +128,7 @@ docker compose -p kitchenpos up -d
 |--------|---------|----------------------------------------|
 |메뉴 |menu |고객에게 판매되는 단위. 하나 이상의 상품으로 구성된다. 
 |이름 |name |비속어가 없는 메뉴의 이름 
-|가격 |price |0원 이상의 메뉴의 가격. 구성된 상품의 가격보다 크거나 같아야한다. 
+|가격 |price |0원 이상의 메뉴의 가격.
 |노출 |display |등록된 메뉴를 고객이 주문할 수 있는 상태를 의미한다.
 |숨김 |hide |등록된 메뉴를 고객이 주문할 수 없는 상태를 의미한다.
 ------
@@ -143,12 +144,12 @@ docker compose -p kitchenpos up -d
 
 ### 주문
 
-| 한글명   | 영문명             | 설명                      |
-|-------|-----------------|-------------------------|
-|주문 |order |고객이 주문한 메뉴와 수량. 
-|주문 상품 |order line item |주문한 메뉴들의 수량. 
-|주문 방식 |order type |고객이 주문한 방식. 배달, 포장, 매장. 
-|주문 상태 |order status |주문의 진행 상태.
+| 한글명       | 영문명           | 설명                      |
+|-----------|---------------|-------------------------|
+| 주문        | order         |고객이 주문한 메뉴와 수량. 
+| 주문 메뉴 리스트 | order line item |주문한 메뉴들의 수량 및 가격. 
+| 주문 방식     | order type    |고객이 주문한 방식. 배달, 포장, 매장.
+
 ### 주문 상태 변경순서
 - 매장/포장 : 대기 -> 접수 -> 서빙 -> 완료
 - 배달 : 대기 -> 접수 -> 서빙 -> 배달중 -> 배달 완료 -> 완료
@@ -189,11 +190,10 @@ docker compose -p kitchenpos up -d
 ## 모델링
 
 ### 상품
-- `product`은 식별자와 이름, 가격을 가진다.
-- `name`은 외부솔루션 `PurgomalumClient`을 통해 비속어 검사를 통과한 이름만 가질 수 있다.
-- `price`은 0원 이상만 등록 가능하다.
-- `product`은 `price` 0원 이상인 가격으로 변경한다.
-- `price`을 변경할 때 해당 상품이 속한 메뉴들의 가격 비교 후 메뉴 가격보다 단일 상품들의 총금액이 더 비쌀 경우 해당 메뉴은 자동으로 숨김 상태로 변경된다.
+- `상품 (product)`은 식별자와 이름, 가격을 가진다.
+  -  이름은 비속어가 없으며 가격은 0원 이상인 `상품 (product)`만 등록 가능하다.
+- `상품 (product)`은 0원 이상인 가격으로 변경할 수 있다.
+  -  가격이 변경된 `상품 (product)`이 속한 `메뉴(menu)`들에 대한 가격비교를 진행한 뒤 비쌀 경우 메뉴를 숨김상태로 변경한다.
 
 ```mermaid
 stateDiagram-v2
@@ -219,12 +219,12 @@ stateDiagram-v2
 ```
 
 ### 메뉴
-- `menu`은 식별자와 이름, 가격, `menu_group`, 상태(노출/숨김), 메뉴상품들을 가진다.
-- `name`은 외부솔루션 `PurgomalumClient`을 통해 비속어 검사를 통과한 이름만 가질 수 있다.
-- `price`은 0원 이상만 등록 가능하다.
-- `menu`은 `price` 0원 이상인 가격으로 변경한다.
-- `menu`는 1개 이상의 `product`로 구성된다.
-- `price`을 변경할 때 변경할 가격으로 메뉴 가격비교 후 더 비쌀 경우 자동으로 메뉴를 숨김 상태로 변경한다.
+- `메뉴(menu)`은 식별자와 이름, 가격, `메뉴그룹(menu_group)`, 상태(노출/숨김), 상품을 가진다.
+  - 이름은 비속어가 없으며 가격은 0원 이상이며 1개 이상의 상품(product)이 구성된 `메뉴(menu)`만 등록 가능하다.
+- `메뉴(menu)`는 0원이상의 가격으로 변경할 수 있다.
+  - 가격이 변경된 `메뉴(menu)`는 가격비교를 다시 진행한 뒤 더 비쌀 경우 가격 변경 후 숨김 상태로 변경된다.
+- `메뉴(menu)`는 노출/숨김으로 상태를 변경할 수 있다.
+- `메뉴(menu)` 목록을 조회할 수 있다.
 
 ```mermaid
 stateDiagram-v2
@@ -240,11 +240,13 @@ stateDiagram-v2
 
 ### 주문테이블
 
-- `order_table` 는 식별자와 이름, 손님 수, 빈 테이블 여부를 가진다.
-- 빈 테이블 `empty table`은 주문을 받을 수 있는 상태를 의미한다. 이 상태의 `NumberOfGuests`는 0이다.
-- 방문 손님 수 `number of guests`는 주문 테이블에 앉아있는 고객 수를 의미한다.
-- `eat in order` -> `waiting` -> `accepted` -> `served` -> `completed` 순으로 주문이 진행된다.
-    - `completed` 이후 해당 `order_table` 은 다시 `empty table` 상태로 변경된다.
+- `주문테이블(order_table)`은 이름, 방문 손님 수, 주문 가능 상태를 가진다.
+  - 반드시 이름이 있는 `주문테이블(order_table)`만 등록 가능하다.
+- `주문테이블(order_table)`은 처음 등록될 때 빈테이블로 방문 손님 수는 0으로 등록된다.
+- `주문테이블(order_table)`은 빈테이블로 설정/해지할 수 있다.
+  - 완료된 주문이 있는 `주문테이블(order_table)`만 빈테이블을 해지할 수 있다.
+- `주문테이블(order_table)`은 처음 등록될때 방문 손님 수는 0이며 0 이상인 값으로 변경할 수 있다.
+- `주문테이블(order_table)` 목록을 조회할 수 있다.
 
 ```mermaid
 stateDiagram-v2
@@ -256,76 +258,96 @@ stateDiagram-v2
     completed --> table: 빈 테이블으로 변경
 ```
 
-### 주문
+### 주문(공통)
 
-- `order`는 주문을 의미한다. 식별자 ,`order type`,`order status`,`order line item`를 가진다
-- `order`의 `order type`에 따라 추가적인 값을 가질 수 있다.
-- `order status`는 주문의 진행 상태를 의미한다. `order type` 에 따라 다른 상태를 가진다.
-- `order line item`은 주문된 `menu`와 수량을 의미한다.
-- `order_line_item`을 가질 수 있으며 수량이 0 미만일 수 있다.
-- `order_line_item`의 주문 가능한 `menu`는 `display` 상태인 메뉴이다.
+- `주문(order)`은 주문상품, 주문방식, 주문상태, 주문일시을 가진다.
+  - `주문(order)`의 주문방식에 따라 추가적인 속성을 가질 수 있다.
+- 아래의 조건을 충족하는 `주문(order)`만 등록 가능하다.
+  - 반드시 주문유형을 선택해야 된다.
+  - 주문 요청한 주문상품의 메뉴들은 숨김 상태이면 안된다.
+  - 등록된 메뉴 가격과 주문 요청한 주문상품들의 메뉴 가격이 일치해야 된다.
+- `주문(order)`은 처음 등록될 때 대기상태로 등록된다. 
 
 ### 매장 주문
 
-- `order`의 `order type`이 `eat in order`이 매장에서 주문한 주문을 의미한다.
-- `empty table` 이 있어야 주문을 등록할 수 있다.
-- 주문 요청 시 `waiting` -> `accepted` -> `served` -> `completed` 순으로 주문이 진행된다.
-    - `completed` 이후 사용 된 `order_table` 은 다시 `empty table` 상태로 변경된다.
+- `주문(order)` 공통 영역을 모두 충족해야 된다.
+- `매장주문(eat in order)`은 주문유형이 매장인 `주문(order)`이며 추가로 `주문테이블(order_table)` 속성을 갖는다.
+- 아래 조건을 추가로 충족한 `매장주문(eat in order)`만 등록 가능하다.
+  - `주문테이블(order_table)`은 빈테이블이여야 한다.
+  - 주문상품 수량은 음수/양수 모두 선택 가능하다.
+    - 수량이 음수인 경우 주문상품 취소를 의미한다.
+- `매장주문(eat in order)` 등록 시 주문상태는 다음 순서대로 변경 가능하다.
+  - 대기 -> 접수 -> 서빙 -> 완료
+  - 주문상태 완료 처리될 때 해당 주문의 주문테이블는 자동으로 빈테이블로 설정된다.
 
 ```mermaid
 sequenceDiagram
     participant Customer
-    participant OrderTable
     participant SHOP
-    Customer ->> SHOP: 매장 주문 요청
+    participant OrderTable
+    participant Order
+    Customer ->> SHOP: 매장주문 요청
     SHOP ->> OrderTable: 빈 테이블인지 확인
     OrderTable -->> SHOP: 빈 테이블 확인 완료
-    SHOP ->> OrderTable: 매장 주문 등록 (상태: waiting)
-    SHOP -->> Customer: 매장 주문 접수 완료
-    Customer -->> SHOP: 매장 주문 접수 확인
-    SHOP ->> OrderTable: 매장 주문 상태 변경 (상태: accepted)
-    OrderTable ->> Customer: 매장 주문 서빙 완료
-    SHOP ->> OrderTable: 매장 주문 상태 변경 (상태: served)
-    OrderTable -->> SHOP: 서빙 완료 확인
-    SHOP ->> OrderTable: 매장 주문 상태 변경 (상태: completed)
-    OrderTable -->> SHOP: empty table로 변경
+    SHOP ->> OrderTable: 빈 테이블 해지
+    SHOP ->> OrderTable: 방문 손님 수 변경  
+    SHOP ->> Order: 매장주문 등록 (상태: waiting)
+    SHOP ->> Order: 매장주문 접수 (상태: accepted)
+    SHOP ->> Customer: 매장주문 서빙 완료
+    SHOP ->> Order: 매장주문 서빙 (상태: served)
+    SHOP ->> Order: 매장주문 상태 변경 (상태: completed)
+    Order -->> OrderTable: 빈 테이블 설정
 ```
 
 ### 배달 주문
 
-- `order`의 `order type`이 `delivery order`이 배달 주문을 의미한다.
-- `delivery order`는 `delivery address`를 가진다.
-- 주문 요청 시 `waiting` -> `accepted` -> `served` -> `delivering` -> `delivered` -> `completed` 순으로 주문이 진행된다.
-- 배달 주문이 `accepted`  시 `delivery agency`를 호출한다.
+- `주문(order)` 공통 영역을 모두 충족해야 된다.
+- `배달주문(takeout order)`은 주문유형이 배달인 `주문(order)`이며 추가로 배달주소 속성을 갖는다.
+- 아래 조건을 추가로 충족한 `배달주문(takeout order)`만 등록 가능하다.
+  - 배달주소를 반드시 입력해야 된다.
+  - 주문상품 수량은 반드시 0 이상이여야 한다.
+- `배달주문(takeout order)` 등록 시 주문상태는 다음 순서대로 변경 가능하다.
+  - 대기 -> 접수 -> 서빙 -> 배달중 -> 배달완료 -> 완료
+
 
 ```mermaid
 sequenceDiagram
     participant Customer
     participant SHOP
+    participant Order
     participant Rider
     participant DeliveryAgency
-    Customer ->> SHOP: 배달 주문 요청
-    SHOP -->> Customer: 배달 주문 접수 완료
-    SHOP ->> DeliveryAgency: 배달 요청 (상태: accepted)
-    SHOP ->> Rider: 배달 음식 전달 (상태: served)
-    Rider -->> Customer: 배달 진행 ( 상태: delivering)
-    Rider ->> SHOP: 배달 완료 (상태: delivered)
-    SHOP -->> Customer: 배달 주문 완료 (상태: completed)
+    Customer ->> SHOP: 배달주문 요청
+    SHOP -->> Order: 배달주문 등록 (상태: waiting)
+    SHOP -->> Order: 배달주문 접수 (상태: accepted)
+    SHOP ->> DeliveryAgency: 배달 요청
+    SHOP -->> Order: 배달주문 준비 (상태: served)
+    Rider ->> SHOP: 배달주문 픽업
+    SHOP -->> Order: 배달주문 배달 진행 ( 상태: delivering)
+    Rider -->> Customer: 배달 완료
+    Rider ->> Order: 배달주문 완료 (상태: delivered)
+    SHOP -->> Order: 배달주문 완료 (상태: completed)
 
 ```
 
 ### 포장 주문
 
-- `order`의 `order type`이 `takeout order`이 포장 주문을 의미한다.
-- 주문 요청 시 `waiting` -> `accepted` -> `served` -> `completed` 순으로 주문이 진행된다.
+- `주문(order)` 공통 영역을 모두 충족해야 된다.
+- `포장주문(takeout order)`은 주문유형이 포장인 `주문(order)`이다.
+- 아래 조건을 추가로 충족한 `포장주문(takeout order)`만 등록 가능하다.
+  - 주문상품 수량은 반드시 0 이상이여야 한다.
+- `포장주문(takeout order)` 등록 시 주문상태는 다음 순서대로 변경 가능하다.
+  - 대기 -> 접수 -> 서빙 -> 완료
 
 ```mermaid
 sequenceDiagram
     participant Customer
     participant SHOP
-    Customer ->> SHOP: 포장 주문 요청
-    SHOP -->> Customer: 포장 주문 접수 완료 (상태: accepted)
-    SHOP ->> Customer: 포장 주문 제공 (상태: served)
-    SHOP -->> Customer: 포장 주문 완료 (상태: completed)
+    Customer ->> SHOP: 포장주문 요청
+    SHOP -->> Order: 포장주문 등록 (상태: waiting)
+    SHOP -->> Order: 포장주문 접수 (상태: accepted)
+    SHOP ->> Customer: 포장주문 서빙 완료
+    SHOP ->> Order: 포장주문 서빙 (상태: served)
+    SHOP ->> Order: 포장주문 완료 (상태: completed)
 ```
 
