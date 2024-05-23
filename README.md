@@ -135,12 +135,14 @@ docker compose -p kitchenpos up -d
 
 ### 주문 테이블
 
-| 한글명     | 영문명              | 설명                      |
-|---------|------------------|-------------------------|
-|주문 테이블 |order table |고객이 매장 주문을 할 수 있는 테이블. 
-|이름 |name |주문 테이블의 이름. 
-|방문 손님 수 |number of guests |주문 테이블에 앉아있는 고객 수. 
-|빈 테이블 |empty table |새로운 주문을 받을 수 있는 상태의 테이블 
+| 한글명    | 영문명              | 설명                      |
+|--------|------------------|-------------------------|
+| 주문 테이블 | order table      |고객이 매장 주문을 할 수 있는 테이블. 
+| 이름     | name             |주문 테이블의 이름. 
+| 방문 손님 수 | number of guests |주문 테이블에 앉아있는 고객 수. 
+| 빈 테이블  | empty table      |사용하는 고객이 없는 주문 테이블 상태
+| 착석     | sit              |빈 테이블을 사용중으로 변경.
+| 치우다    | clear            |사용중인 주문테이블의 사용여부, 방문 손님 수 초기화.
 
 ### 주문
 
@@ -190,10 +192,13 @@ docker compose -p kitchenpos up -d
 ## 모델링
 
 ### 상품
-- `상품 (product)`은 식별자와 이름, 가격을 가진다.
-  -  이름은 비속어가 없으며 가격은 0원 이상인 `상품 (product)`만 등록 가능하다.
-- `상품 (product)`은 0원 이상인 가격으로 변경할 수 있다.
+- `상품 (product)`은 이름, 가격을 가진다.  
+- `상품 (product)`을 등록할 수 있다.
+  - 이름은 비속어가 없으며 가격은 0원 이상으로만 등록 가능하다.
+- `상품 (product)`은 가격을 변경할 수 있다.
+  - 0원 이상인 가격으로만 변경이 가능하다.
   -  가격이 변경된 `상품 (product)`이 속한 `메뉴(menu)`들에 대한 가격비교를 진행한 뒤 비쌀 경우 메뉴를 숨김상태로 변경한다.
+- `상품 (product)` 목록을 조회할 수 있다.
 
 ```mermaid
 stateDiagram-v2
@@ -209,7 +214,9 @@ stateDiagram-v2
 
 ### 메뉴그룹
 - `메뉴그룹(menu_group)`은 이름을 가진다.
-  - 빈값이 아닌 이름만 가질 수 있다.
+- `메뉴그룹(menu_group)`을 등록할 수 있다.
+  - 빈값이 아닌 이름으로만 등록 가능하다.
+- `메뉴그룹(menu_group)` 목록을 조회할 수 있다.
 
 ```mermaid
 stateDiagram-v2
@@ -220,8 +227,10 @@ stateDiagram-v2
 
 ### 메뉴
 - `메뉴(menu)`은 식별자와 이름, 가격, `메뉴그룹(menu_group)`, 상태(노출/숨김), 상품을 가진다.
+- `메뉴(menu)`를 등록한다.
   - 이름은 비속어가 없으며 가격은 0원 이상이며 1개 이상의 상품(product)이 구성된 `메뉴(menu)`만 등록 가능하다.
-- `메뉴(menu)`는 0원이상의 가격으로 변경할 수 있다.
+- `메뉴(menu)`의 가격을 변경한다. 
+  - 0원이상의 가격으로만 변경 가능하다.
   - 가격이 변경된 `메뉴(menu)`는 가격비교를 다시 진행한 뒤 더 비쌀 경우 가격 변경 후 숨김 상태로 변경된다.
 - `메뉴(menu)`는 노출/숨김으로 상태를 변경할 수 있다.
 - `메뉴(menu)` 목록을 조회할 수 있다.
@@ -241,21 +250,28 @@ stateDiagram-v2
 ### 주문테이블
 
 - `주문테이블(order_table)`은 이름, 방문 손님 수, 주문 가능 상태를 가진다.
-  - 반드시 이름이 있는 `주문테이블(order_table)`만 등록 가능하다.
-- `주문테이블(order_table)`은 처음 등록될 때 빈테이블로 방문 손님 수는 0으로 등록된다.
-- `주문테이블(order_table)`은 빈테이블로 설정/해지할 수 있다.
-  - 완료된 주문이 있는 `주문테이블(order_table)`만 빈테이블을 해지할 수 있다.
-- `주문테이블(order_table)`은 처음 등록될때 방문 손님 수는 0이며 0 이상인 값으로 변경할 수 있다.
+- `주문테이블(order_table)`을 등록할 수 있다.
+  - 반드시 이름이 있는 `주문테이블(order_table)`로만 등록 가능하다.
+  - `주문테이블(order_table)`은 처음 등록될 때 빈테이블로 방문 손님 수는 0으로 등록된다. 
+- `주문테이블(order_table)`에 손님이 앉을 수 있다. 
+  - 주문테이블 사용중으로 바뀐다.
+- `주문테이블(order_table)`을 치울 수 있다.
+  - 빈테이블 설정 및 방문 손님수 0으로 초기화 된다.
+  - 모든 주문이 주문완료인 `주문테이블(order_table)`만 치울 수 있다.
+- `주문테이블(order_table)`의 방문 손님 수를 변경할 수 있다.
+  - 방문 손님 수는  0 이상의 값으로만 변경 가능하다.
+  - 사용중인 주문테이블만 방문 손님수를 변경 가능하다.
 - `주문테이블(order_table)` 목록을 조회할 수 있다.
 
 ```mermaid
 stateDiagram-v2
-    table: empty_table
-    table --> waiting: 매장 주문 등록
-    waiting --> accepted: 매장 주문 접수
-    accepted --> served: 매장 주문 서빙
-    served --> completed: 매장 주문 완료
-    completed --> table: 빈 테이블으로 변경
+    table: order_table
+    table --> new_order_table: 주문테이블 등록
+    table --> sit : 주문테이블 손님 착석
+    sit --> used_order_table : 주문테이블 사용중 상태 변경
+    used_order_table --> change_guest_num_order_table : 주문테이블 방문 손님 수 변경
+    table --> clear : 주문테이블 치우기
+    clear --> init_order_table : 방문 손님수 0, 빈테이블로 초기화
 ```
 
 ### 주문(공통)
@@ -273,61 +289,49 @@ stateDiagram-v2
 - `주문(order)` 공통 영역을 모두 충족해야 된다.
 - `매장주문(eat in order)`은 주문유형이 매장인 `주문(order)`이며 추가로 `주문테이블(order_table)` 속성을 갖는다.
 - 아래 조건을 추가로 충족한 `매장주문(eat in order)`만 등록 가능하다.
-  - `주문테이블(order_table)`은 빈테이블이여야 한다.
+  - `주문테이블(order_table)`은 사용중인 주문테이블이여야 한다.
   - 주문상품 수량은 음수/양수 모두 선택 가능하다.
     - 수량이 음수인 경우 주문상품 취소를 의미한다.
 - `매장주문(eat in order)` 등록 시 주문상태는 다음 순서대로 변경 가능하다.
   - 대기 -> 접수 -> 서빙 -> 완료
-  - 주문상태 완료 처리될 때 해당 주문의 주문테이블는 자동으로 빈테이블로 설정된다.
+  - 주문상태 완료 처리될 때 해당 주문의 주문테이블는 자동으로 치워진다.
 
 ```mermaid
-sequenceDiagram
-    participant Customer
-    participant SHOP
-    participant OrderTable
-    participant Order
-    Customer ->> SHOP: 매장주문 요청
-    SHOP ->> OrderTable: 빈 테이블인지 확인
-    OrderTable -->> SHOP: 빈 테이블 확인 완료
-    SHOP ->> OrderTable: 빈 테이블 해지
-    SHOP ->> OrderTable: 방문 손님 수 변경  
-    SHOP ->> Order: 매장주문 등록 (상태: waiting)
-    SHOP ->> Order: 매장주문 접수 (상태: accepted)
-    SHOP ->> Customer: 매장주문 서빙 완료
-    SHOP ->> Order: 매장주문 서빙 (상태: served)
-    SHOP ->> Order: 매장주문 완료 (상태: completed)
-    Order -->> OrderTable: 빈 테이블 설정
+stateDiagram-v2
+  table: order
+  table --> eat_in_order: 매장주문 등록
+  eat_in_order --> waiting : 매장주문 대기
+  waiting --> accpted : 매장주문 접수
+  accpted --> serving : 매장주문 상품 제공
+  serving --> completed : 매장주문 주문 완료
+  completed --> clear : 방문 손님수 0, 빈테이블로 초기화
+  clear --> init_order_table
 ```
 
 ### 배달 주문
 
 - `주문(order)` 공통 영역을 모두 충족해야 된다.
-- `배달주문(takeout order)`은 주문유형이 배달인 `주문(order)`이며 추가로 배달주소 속성을 갖는다.
-- 아래 조건을 추가로 충족한 `배달주문(takeout order)`만 등록 가능하다.
+- `배달주문(delivery order)`은 주문유형이 배달인 `주문(order)`이며 추가로 배달주소 속성을 갖는다.
+- 아래 조건을 추가로 충족한 `배달주문(delivery order)`만 등록 가능하다.
   - 배달주소를 반드시 입력해야 된다.
   - 주문상품 수량은 반드시 0 이상이여야 한다.
-- `배달주문(takeout order)` 등록 시 주문상태는 다음 순서대로 변경 가능하다.
+- `배달주문(delivery order)` 등록 시 주문상태는 다음 순서대로 변경 가능하다.
   - 대기 -> 접수 -> 서빙 -> 배달중 -> 배달완료 -> 완료
-
+  - 접수로 상태 변경 시 자동으로 배달 대행사로 배달원을 요청한다.
 
 ```mermaid
-sequenceDiagram
-    participant Customer
-    participant SHOP
-    participant Order
-    participant Rider
-    participant DeliveryAgency
-    Customer ->> SHOP: 배달주문 요청
-    SHOP -->> Order: 배달주문 등록 (상태: waiting)
-    SHOP -->> Order: 배달주문 접수 (상태: accepted)
-    SHOP ->> DeliveryAgency: 배달 요청
-    SHOP -->> Order: 배달주문 준비 (상태: served)
-    Rider ->> SHOP: 배달주문 픽업
-    SHOP -->> Order: 배달주문 배달 진행 ( 상태: delivering)
-    Rider -->> Customer: 배달 완료
-    Rider ->> Order: 배달주문 완료 (상태: delivered)
-    SHOP -->> Order: 배달주문 완료 (상태: completed)
-
+stateDiagram-v2
+  table: order
+  table --> delivery_order: 배달주문 등록
+  delivery_order --> waiting : 배달주문 대기
+  waiting --> accpted : 배달주문 접수
+  accpted --> call_rider  : 배달원 요청
+  accpted --> serving : 배달주문 상품 제공
+  serving --> pickup_rider : 배달원 상품 픽업
+  serving --> delivering : 배달주문 배달시작
+  pickup_rider --> quest : 배달원 상품 배달
+  delivering --> delivered : 배달주문 배달완료
+  delivered --> completed : 배달주문 주문완료
 ```
 
 ### 포장 주문
@@ -340,14 +344,12 @@ sequenceDiagram
   - 대기 -> 접수 -> 서빙 -> 완료
 
 ```mermaid
-sequenceDiagram
-    participant Customer
-    participant SHOP
-    Customer ->> SHOP: 포장주문 요청
-    SHOP -->> Order: 포장주문 등록 (상태: waiting)
-    SHOP -->> Order: 포장주문 접수 (상태: accepted)
-    SHOP ->> Customer: 포장주문 서빙 완료
-    SHOP ->> Order: 포장주문 서빙 (상태: served)
-    SHOP ->> Order: 포장주문 완료 (상태: completed)
+stateDiagram-v2
+  table: order
+  table --> takeout_order: 포장주문 등록
+  takeout_order --> waiting : 포장주문 대기
+  waiting --> accpted : 포장주문 접수
+  accpted --> serving : 포장주문 상품 제공
+  serving --> completed : 포장주문 주문완료
 ```
 
