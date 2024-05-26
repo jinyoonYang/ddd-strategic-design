@@ -1,4 +1,4 @@
-package kitchenpos.external.infra.rider;
+package kitchenpos.external.rider;
 
 import org.springframework.stereotype.Component;
 

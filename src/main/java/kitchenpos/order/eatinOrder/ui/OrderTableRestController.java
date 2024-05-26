@@ -1,7 +1,7 @@
-package kitchenpos.order.common.ui;
+package kitchenpos.order.eatinOrder.ui;
 
-import kitchenpos.order.common.application.OrderTableService;
-import kitchenpos.order.common.domain.OrderTable;
+import kitchenpos.order.eatinOrder.application.OrderTableService;
+import kitchenpos.order.eatinOrder.domain.OrderTable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -213,32 +213,24 @@ stateDiagram-v2
     menu --> hide_menu
 ```
 
-### 메뉴그룹
-- `메뉴그룹(menu_group)`은 `이름`을 가진다.
-- `메뉴그룹(menu_group)`을 등록할 수 있다.
-  - 빈값이 아닌 이름으로만 등록 가능하다.
-- `메뉴그룹(menu_group)` 목록을 조회할 수 있다.
-
-```mermaid
-stateDiagram-v2
-    table: admin
-    table --> menu_group: 메뉴 그룹 등록
-    menu_group --> new_menu_group
-```
-
 ### 메뉴
+- `메뉴그룹(menu_group)`은 `이름`을 가진다.
 - `메뉴(menu)`은 `이름`, `가격`, `메뉴그룹(menu_group)`, 상태(`노출`/`숨김`), `상품(product)`을 가진다.
+- `메뉴그룹(menu_group)`을 등록할 수 있다.
 - `메뉴(menu)`를 등록한다.
   - 이름은 비속어가 없으며 가격은 0원 이상이며 1개 이상의 상품(product)이 구성된 `메뉴(menu)`만 등록 가능하다.
 - `메뉴(menu)`의 `가격`을 변경한다. 
   - 0원이상의 `가격`으로만 변경 가능하다.
   - `가격`이 변경된 `메뉴(menu)`는 `가격비교`를 다시 진행한 뒤 더 비쌀 경우 가격 변경 후 `숨김` 상태로 변경된다.
 - `메뉴(menu)`는 `노출`/`숨김`으로 상태를 변경할 수 있다.
+- `메뉴그룹(menu_group)` 목록을 조회할 수 있다.
 - `메뉴(menu)` 목록을 조회할 수 있다.
 
 ```mermaid
 stateDiagram-v2
     table: admin
+    table --> menu_group: 메뉴 그룹 등록
+    menu_group --> new_menu_group
     table --> menu: 메뉴 등록
     menu --> purgomalum: 비속어 검사
     purgomalum --> new_menu
@@ -248,13 +240,12 @@ stateDiagram-v2
     menu --> change_price_menu
 ```
 
-### 주문테이블
-
+### 주문
 - `주문테이블(order_table)`은 `이름`, `방문 손님 수`, 주문 가능 상태를 가진다.
 - `주문테이블(order_table)`을 등록할 수 있다.
   - 반드시 이름이 있는 `주문테이블(order_table)`로만 등록 가능하다.
-  - `주문테이블(order_table)`은 처음 등록될 때 `빈테이블`로 `방문 손님 수`는 0으로 등록된다. 
-- `주문테이블(order_table)`에 `고객`이 `착석`할 수 있다. 
+  - `주문테이블(order_table)`은 처음 등록될 때 `빈테이블`로 `방문 손님 수`는 0으로 등록된다.
+- `주문테이블(order_table)`에 `고객`이 `착석`할 수 있다.
   - `주문테이블(order_table)` 사용중으로 바뀐다.
 - `주문테이블(order_table)`을 `치울 수 있다`.
   - `빈테이블` 설정 및 `방문 손님수` 0으로 초기화 된다.
@@ -263,7 +254,6 @@ stateDiagram-v2
   - `방문 손님 수`는  0 이상의 값으로만 변경 가능하다.
   - 사용중인 `주문테이블(order_table)`만 `방문 손님수`를 변경 가능하다.
 - `주문테이블(order_table)` 목록을 조회할 수 있다.
-
 ```mermaid
 stateDiagram-v2
     table: order_table
@@ -274,19 +264,16 @@ stateDiagram-v2
     table --> clear : 주문테이블 치우기
     clear --> init_order_table : 방문 손님수 0, 빈테이블로 초기화
 ```
-
-### 주문(공통)
-
+#### 주문 공통 영역
 - `주문(order)`은 `주문메뉴리스트`, `주문방식`, `주문상태`, 주문일시을 가진다.
   - `주문(order)`의 `주문방식`에 따라 추가적인 속성을 가질 수 있다.
 - 아래의 조건을 충족하는 `주문(order)`만 등록 가능하다.
   - 반드시 `주문방식`을 선택해야 된다.
   - 주문 요청한 `주문메뉴리스트`에서의 `주문상품`의 `메뉴(menu)`들은 `숨김` 상태이면 안된다.
   - 등록된 `메뉴(menu)` `가격`과 주문 요청한 `주문상품`들의 `메뉴(menu)` `가격`이 일치해야 된다.
-- `주문(order)`은 처음 등록될 때 `대기`상태로 등록된다. 
+- `주문(order)`은 처음 등록될 때 `대기`상태로 등록된다.
 
 ### 매장 주문
-
 - `주문(order)` 공통 영역을 모두 충족해야 된다.
 - `매장주문(eat in order)`은 `주문방식`이 `매장`인 `주문(order)`이며 추가로 `주문테이블(order_table)` 속성을 갖는다.
 - 아래 조건을 추가로 충족한 `매장주문(eat in order)`만 등록 가능하다.

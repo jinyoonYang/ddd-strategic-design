@@ -1,4 +1,4 @@
-package kitchenpos.external.infra.profanity;
+package kitchenpos.external.profanity;
 
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
