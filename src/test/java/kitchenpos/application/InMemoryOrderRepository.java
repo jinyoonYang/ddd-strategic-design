@@ -4,7 +4,7 @@ package kitchenpos.application;
 import kitchenpos.order.eatinOrder.domain.Order;
 import kitchenpos.order.eatinOrder.domain.OrderStatus;
 import kitchenpos.order.eatinOrder.domain.OrderTable;
-import kitchenpos.order.eatinOrder.infra.OrderRepository;
+import kitchenpos.order.eatinOrder.domain.OrderRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
