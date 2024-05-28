@@ -1,7 +1,5 @@
-package kitchenpos.order.eatinOrder.infra;
+package kitchenpos.order.eatinOrder.domain;
 
-import kitchenpos.order.eatinOrder.domain.Order;
-import kitchenpos.order.eatinOrder.domain.OrderRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
